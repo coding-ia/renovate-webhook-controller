@@ -3,23 +3,17 @@ before:
   hooks:
     - go mod tidy
 builds:
-  - id: bootstrap_build
-    env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-    goarch:
-      - amd64
-    binary: bootstrap
-    main: .
-    ldflags: "-s -w"
+- id: bootstrap_build
+  env:
+    - CGO_ENABLED=0
+  goos:
+    - linux
+  goarch:
+    - amd64
+  binary: bootstrap
+  ldflags: "-s -w"
 archives:
-  - id: bootstrap_zip
-    builds:
-      - bootstrap_build
-    format: zip
-    name_template: "renovate-webhook-controller"
-    files:
-      - dist/bootstrap_build_linux_amd64_v1/bootstrap
+- format: zip
+  name_template: "renovate-webhook-controller"
 release:
   draft: true
