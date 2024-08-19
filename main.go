@@ -65,12 +65,10 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		installationID := strconv.FormatInt(*e.Installation.ID, 10)
 
 		for _, repository := range e.RepositoriesAdded {
-			repo := fmt.Sprintf("%s/%s", repository.GetOwner().GetLogin(), repository.GetName())
-
 			taskConfig := service.RunTaskConfig{
 				ApplicationID:  applicationID,
 				InstallationID: installationID,
-				Repository:     repo,
+				Repository:     *repository.FullName,
 			}
 
 			_, err := svc.RunTask(taskConfig)
