@@ -32,17 +32,27 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	valid, err := validateGitHubSignature(request.Body, signature, []byte(webhookSecret))
 	if err != nil {
 		fmt.Printf("Error validating signature: %v\n", err)
+		return events.APIGatewayProxyResponse{
+			Body:       "{\"error\": \"Error validating signature\"}",
+			StatusCode: 200,
+		}, nil
 	}
 
 	if !valid {
-		fmt.Printf("Invalid signature\n")
-	} else {
-		fmt.Printf("Valid signature\n")
+		fmt.Println("Invalid signature")
+		return events.APIGatewayProxyResponse{
+			Body:       "{\"error\": \"Invalid signature\"}",
+			StatusCode: 200,
+		}, nil
 	}
 
 	event, err := github.ParseWebHook(eventType, []byte(request.Body))
 	if err != nil {
 		fmt.Printf("Error parsing webhook: %s\n", err)
+		return events.APIGatewayProxyResponse{
+			Body:       "",
+			StatusCode: 200,
+		}, nil
 	}
 
 	switch e := event.(type) {
@@ -102,7 +112,7 @@ func validateGitHubSignature(body string, signature string, secret []byte) (bool
 		return true, nil
 	}
 
-	return false, fmt.Errorf("invalid signature")
+	return false, nil
 }
 
 func main() {
