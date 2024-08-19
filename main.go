@@ -31,9 +31,8 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	valid, err := validateGitHubSignature(request.Body, signature, []byte(webhookSecret))
 	if err != nil {
-		fmt.Printf("Error validating signature: %v\n", err)
 		return events.APIGatewayProxyResponse{
-			Body:       "{\"error\": \"Error validating signature\"}",
+			Body:       fmt.Sprintf("{\"error\": \"Error validating signature: %s\"}", err),
 			StatusCode: 200,
 		}, nil
 	}
