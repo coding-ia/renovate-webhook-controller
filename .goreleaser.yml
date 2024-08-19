@@ -20,6 +20,6 @@ archives:
     format: zip
     name_template: "renovate-webhook-controller"
     files:
-      - bootstrap
+      - dist/bootstrap_build_linux_amd64_v1/bootstrap
 release:
   draft: true
