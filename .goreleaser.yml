@@ -18,6 +18,6 @@ archives:
     builds:
       - bootstrap_build
     format: zip
-    name_template: "renovate-webhook-controller.zip"
+    name_template: "renovate-webhook-controller"
 release:
   draft: true
