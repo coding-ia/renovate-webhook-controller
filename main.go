@@ -54,13 +54,30 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		}, nil
 	}
 
+	config := service.ECSConfig{
+		Cluster:  clusterName,
+		Task:     task,
+		PublicIP: publicIP,
+	}
+
 	switch e := event.(type) {
-	case *github.InstallationRepositoriesEvent:
-		config := service.ECSConfig{
-			Cluster:  clusterName,
-			Task:     task,
-			PublicIP: publicIP,
+	case *github.InstallationEvent:
+		svc := service.NewRenovateTaskService(config)
+		installationID := strconv.FormatInt(*e.Installation.ID, 10)
+
+		for _, repository := range e.Repositories {
+			taskConfig := service.RunTaskConfig{
+				ApplicationID:  applicationID,
+				InstallationID: installationID,
+				Repository:     *repository.FullName,
+			}
+
+			_, err := svc.RunTask(taskConfig)
+			if err != nil {
+				fmt.Printf("Error running task: %s\n", err)
+			}
 		}
+	case *github.InstallationRepositoriesEvent:
 		svc := service.NewRenovateTaskService(config)
 		installationID := strconv.FormatInt(*e.Installation.ID, 10)
 
