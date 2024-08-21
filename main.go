@@ -20,6 +20,8 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	task := os.Getenv("AWS_ECS_CLUSTER_TASK")
 	webhookSecret := os.Getenv("WEBHOOK_SECRET")
 	assignPublicIP := os.Getenv("AWS_ECS_TASK_PUBLIC_IP")
+	subnets := os.Getenv("AWS_ECS_TASK_SUBNET_IDS")
+	securityGroups := os.Getenv("AWS_ECS_TASK_SECURITY_GROUP_IDS")
 
 	publicIP, err := strconv.ParseBool(assignPublicIP)
 	if err != nil {
@@ -54,10 +56,24 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		}, nil
 	}
 
+	var subnetsSlice []string
+	var securityGroupsSlice []string
+
+	if subnets != "" {
+		subnetsSlice = strings.Split(subnets, ",")
+	}
+	if securityGroups != "" {
+		securityGroupsSlice = strings.Split(securityGroups, ",")
+	}
+
 	config := service.ECSConfig{
-		Cluster:  clusterName,
-		Task:     task,
-		PublicIP: publicIP,
+		Cluster: clusterName,
+		Task:    task,
+		AWSVPCConfig: service.ECSVPCConfig{
+			Subnets:        subnetsSlice,
+			SecurityGroups: securityGroupsSlice,
+			AssignPublicIP: publicIP,
+		},
 	}
 
 	switch e := event.(type) {
