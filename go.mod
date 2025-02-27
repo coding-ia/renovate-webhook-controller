@@ -1,10 +1,10 @@
 module renovate-webhook-controller
 
-go 1.23.0
+go 1.23.6
 
 require (
 	github.com/aws/aws-lambda-go v1.47.0
-	github.com/coding-ia/renovate-controller v1.0.0-1
+	github.com/coding-ia/renovate-controller v1.0.4
 	github.com/google/go-github/v63 v63.0.0
 )
 
