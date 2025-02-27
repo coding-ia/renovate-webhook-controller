@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -14,7 +15,7 @@ import (
 	"strings"
 )
 
-func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func handler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	applicationID := os.Getenv("GITHUB_APPLICATION_ID")
 	clusterName := os.Getenv("AWS_ECS_CLUSTER_NAME")
 	task := os.Getenv("AWS_ECS_CLUSTER_TASK")
@@ -81,28 +82,22 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		svc := service.NewRenovateTaskService(config)
 		installationID := strconv.FormatInt(*e.Installation.ID, 10)
 
-		for _, repository := range e.Repositories {
-			taskConfig := service.RunTaskConfig{
-				ApplicationID:  applicationID,
-				InstallationID: installationID,
-				Repository:     *repository.FullName,
-			}
-
-			runTask(svc, taskConfig)
+		taskConfig := service.RunTaskConfig{
+			ApplicationID:  applicationID,
+			InstallationID: installationID,
 		}
+
+		runTask(ctx, svc, taskConfig)
 	case *github.InstallationRepositoriesEvent:
 		svc := service.NewRenovateTaskService(config)
 		installationID := strconv.FormatInt(*e.Installation.ID, 10)
 
-		for _, repository := range e.RepositoriesAdded {
-			taskConfig := service.RunTaskConfig{
-				ApplicationID:  applicationID,
-				InstallationID: installationID,
-				Repository:     *repository.FullName,
-			}
-
-			runTask(svc, taskConfig)
+		taskConfig := service.RunTaskConfig{
+			ApplicationID:  applicationID,
+			InstallationID: installationID,
 		}
+
+		runTask(ctx, svc, taskConfig)
 	default:
 		fmt.Printf("Unhandled event type: %s\n", eventType)
 	}
@@ -113,8 +108,8 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}, nil
 }
 
-func runTask(svc *service.TaskService, taskConfig service.RunTaskConfig) {
-	_, err := svc.RunTask(taskConfig)
+func runTask(ctx context.Context, svc *service.TaskService, taskConfig service.RunTaskConfig) {
+	_, err := svc.RunTask(ctx, taskConfig)
 	if err != nil {
 		fmt.Printf("Error running task: %s\n", err)
 	}
