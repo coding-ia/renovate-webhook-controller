@@ -12,7 +12,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -77,31 +76,21 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		},
 	}
 
-	const maxConcurrentTasks = 5
-	sem := make(chan struct{}, maxConcurrentTasks) // Semaphore for concurrency control
-	var wg sync.WaitGroup
-
 	switch e := event.(type) {
 	case *github.InstallationEvent:
 		svc := service.NewRenovateTaskService(config)
 		installationID := strconv.FormatInt(*e.Installation.ID, 10)
 
 		for _, repository := range e.Repositories {
-			wg.Add(1)
-			sem <- struct{}{}
-
 			taskConfig := service.RunTaskConfig{
 				ApplicationID:  applicationID,
 				InstallationID: installationID,
 				Repository:     *repository.FullName,
 			}
 
-			runTask(svc, taskConfig, &wg, sem)
+			runTask(svc, taskConfig)
 		}
 	case *github.InstallationRepositoriesEvent:
-		wg.Add(1)
-		sem <- struct{}{}
-
 		svc := service.NewRenovateTaskService(config)
 		installationID := strconv.FormatInt(*e.Installation.ID, 10)
 
@@ -112,13 +101,11 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 				Repository:     *repository.FullName,
 			}
 
-			runTask(svc, taskConfig, &wg, sem)
+			runTask(svc, taskConfig)
 		}
 	default:
 		fmt.Printf("Unhandled event type: %s\n", eventType)
 	}
-
-	wg.Wait()
 
 	return events.APIGatewayProxyResponse{
 		Body:       "",
@@ -126,15 +113,11 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	}, nil
 }
 
-func runTask(svc *service.TaskService, taskConfig service.RunTaskConfig, wg *sync.WaitGroup, sem chan struct{}) {
-	defer wg.Done()
-
+func runTask(svc *service.TaskService, taskConfig service.RunTaskConfig) {
 	_, err := svc.RunTask(taskConfig)
 	if err != nil {
 		fmt.Printf("Error running task: %s\n", err)
 	}
-
-	<-sem
 }
 
 func validateGitHubSignature(body string, signature string, secret []byte) (bool, error) {
