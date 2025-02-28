@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-lambda-go v1.47.0
 	github.com/coding-ia/renovate-controller v1.0.5
 	github.com/google/go-github/v63 v63.0.0
+	github.com/google/go-github/v69 v69.2.0
 )
 
 require (
